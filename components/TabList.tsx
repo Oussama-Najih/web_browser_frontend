@@ -1,12 +1,12 @@
+// components/TabList.tsx
 "use client";
-import api, { getTab } from "@/lib/api";
+import api from "@/lib/api";
 import { useEffect, useState } from "react";
 
-// Update your Tab type in TabList.tsx
 export type Tab = {
   id: number;
   current?: { url: string; title: string };
-  search_history?: { query: string }[];
+  history: { url: string; title: string }[];
 };
 
 export default function TabList({
@@ -17,8 +17,15 @@ export default function TabList({
   onSelect: (id: number) => void;
 }) {
   const [tabs, setTabs] = useState<Tab[]>([]);
-  const refreshTabs = async () => setTabs((await api.get("/tabs")).data);
-  useEffect(() => void refreshTabs(), []);
+
+  const refreshTabs = async () => {
+    const response = await api.get<Tab[]>("/tabs");
+    setTabs(response.data);
+  };
+
+  useEffect(() => {
+    refreshTabs();
+  }, []);
 
   return (
     <div className="flex space-x-2 mb-4">
@@ -26,11 +33,16 @@ export default function TabList({
         <div key={t.id} className="relative">
           <button
             onClick={() => onSelect(t.id)}
-            className={`px-2 py-1 rounded ${
+            className={`px-3 py-1 rounded flex flex-col items-start ${
               t.id === activeId ? "bg-blue-500 text-white" : "bg-gray-200"
             }`}
           >
-            Tab #{t.id}
+            <span>Tab #{t.id}</span>
+            {t.current && (
+              <span className="text-xs truncate max-w-[120px]">
+                {t.current.url}
+              </span>
+            )}
           </button>
           <button
             onClick={() => api.delete(`/tab/${t.id}`).then(refreshTabs)}
@@ -44,7 +56,7 @@ export default function TabList({
       ))}
       <button
         onClick={() => api.post("/tabs").then(refreshTabs)}
-        className="px-2 py-1 rounded bg-green-400 text-white"
+        className="px-3 py-1 rounded bg-green-400 text-white"
       >
         +
       </button>
