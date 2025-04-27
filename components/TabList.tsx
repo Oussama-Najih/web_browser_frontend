@@ -38,11 +38,6 @@ export default function TabList({
             }`}
           >
             <span>Tab #{t.id}</span>
-            {t.current && (
-              <span className="text-xs truncate max-w-[120px]">
-                {t.current.url}
-              </span>
-            )}
           </button>
           <button
             onClick={() => api.delete(`/tab/${t.id}`).then(refreshTabs)}

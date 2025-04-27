@@ -50,6 +50,19 @@ export default function Home() {
     fetchHistory(active);
   };
 
+  const renameEntry = async (url: string) => {
+    if (active === null) return;
+    const newTitle = prompt("Enter new title for this entry:");
+    if (!newTitle) return;
+
+    await api.put(`/tab/${active}/entry`, {
+      url,
+      title: newTitle,
+    });
+
+    fetchHistory(active);
+  };
+
   return (
     <main className="p-4 space-y-4">
       <h1 className="text-xl font-semibold">Mini Browser</h1>
@@ -90,6 +103,13 @@ export default function Home() {
                     onClick={() => deleteEntry(h.url)}
                   >
                     X
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="text-blue-600"
+                    onClick={() => renameEntry(h.url)}
+                  >
+                    Rename
                   </Button>
                 </li>
               ))}
