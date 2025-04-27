@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
 import TabList from "@/components/TabList";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const [active, setActive] = useState<number | null>(null);
@@ -43,6 +44,12 @@ export default function Home() {
     fetchHistory(active);
   };
 
+  const deleteEntry = async (url: string) => {
+    if (active === null) return;
+    await api.delete(`/tab/${active}/entry`, { data: { url } });
+    fetchHistory(active);
+  };
+
   return (
     <main className="p-4 space-y-4">
       <h1 className="text-xl font-semibold">Mini Browser</h1>
@@ -68,23 +75,28 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="border rounded p-4">
-            <h2 className="font-medium mb-2">History for Tab #{active}</h2>
-            {history.length > 0 ? (
-              <ul className="divide-y">
-                {history.map((h, idx) => (
-                  <li key={idx} className="py-2">
-                    <div className="flex justify-between">
-                      <span>{h.title}</span>
-                      <span className="text-gray-500 text-sm">{h.url}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500">No history yet</p>
-            )}
-          </div>
+          <h2 className="font-medium mb-2">History for Tab #{active}</h2>
+          {history.length > 0 ? (
+            <ul className="space-y-3">
+              {history.map((h, idx) => (
+                <li
+                  key={idx}
+                  className="py-2 relative border h-20 flex items-center"
+                >
+                  <span>{h.title}</span>
+                  <Button
+                    variant="ghost"
+                    className="absolute top-2 right-4 text-destructive"
+                    onClick={() => deleteEntry(h.url)}
+                  >
+                    X
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-500">No history yet</p>
+          )}
         </div>
       )}
     </main>
