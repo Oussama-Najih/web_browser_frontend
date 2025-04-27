@@ -1,10 +1,12 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
 import TabList from "@/components/TabList";
+import HistoryList from "@/components/HistoryList";
 import { Button } from "@/components/ui/button";
 
-type HistoryEntry = { url: string; title: string };
+type HistoryEntry = { url: string };
 
 export default function Home() {
   const [active, setActive] = useState<number | null>(null);
@@ -34,10 +36,7 @@ export default function Home() {
 
   const visitUrl = async () => {
     if (active === null || !urlInput) return;
-    await api.post(`/tab/${active}/visit`, {
-      url: urlInput,
-      title: `Visited: ${urlInput}`,
-    });
+    await api.post(`/tab/${active}/visit`, { url: urlInput });
     setUrlInput("");
     fetchTab(active);
   };
@@ -54,11 +53,11 @@ export default function Home() {
     fetchTab(active);
   };
 
-  const renameEntry = async (url: string) => {
+  const renameEntryUrl = async (oldUrl: string) => {
     if (active === null) return;
-    const newTitle = prompt("Enter new title:");
-    if (!newTitle) return;
-    await api.put(`/tab/${active}/entry`, { url, title: newTitle });
+    const newUrl = prompt("Enter the new URL:", oldUrl);
+    if (!newUrl || newUrl === oldUrl) return;
+    await api.put(`/tab/${active}/entry`, { url: oldUrl, newUrl });
     fetchTab(active);
   };
 
@@ -91,12 +90,12 @@ export default function Home() {
               className="border p-2 rounded flex-grow"
               onKeyDown={(e) => e.key === "Enter" && visitUrl()}
             />
-            <button
+            <Button
               onClick={visitUrl}
               className="px-4 py-2 bg-blue-500 text-white rounded"
             >
               Visit
-            </button>
+            </Button>
           </div>
 
           <div className="flex space-x-2 items-center">
@@ -120,46 +119,19 @@ export default function Home() {
           {current ? (
             <div className="border p-4 rounded bg-gray-100">
               <h2 className="font-medium">Currently Viewing:</h2>
-              <p>{current.title}</p>
-              <p className="text-sm text-gray-600">{current.url}</p>
+              <p>{current.url}</p>
             </div>
           ) : (
             <p className="text-gray-500">No page visited yet.</p>
           )}
 
           {showHistory && (
-            <div>
-              <h2 className="font-medium mb-2">History for Tab #{active}</h2>
-              {history.length > 0 ? (
-                <ul className="space-y-3">
-                  {history.map((h, idx) => (
-                    <li
-                      key={idx}
-                      className="py-2 relative border h-20 flex items-center justify-between px-4"
-                    >
-                      <div>
-                        <p
-                          className="cursor-pointer font-semibold"
-                          onClick={() => renameEntry(h.url)}
-                        >
-                          {h.title}
-                        </p>
-                        <p className="text-sm text-gray-600">{h.url}</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        className="text-destructive"
-                        onClick={() => deleteEntry(h.url)}
-                      >
-                        X
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-gray-500">No history yet.</p>
-              )}
-            </div>
+            <HistoryList
+              tabId={active}
+              history={history}
+              renameEntry={renameEntryUrl}
+              deleteEntry={deleteEntry}
+            />
           )}
         </div>
       )}

@@ -1,85 +1,55 @@
-// components/HistoryList.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import api from "@/lib/api";
-import { Tab } from "@/lib/types";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
+import { FC } from "react";
+import { Button } from "@/components/ui/button";
 
-export interface HistoryEntry {
-  url: string;
-  title: string;
-}
+type HistoryEntry = { url: string };
 
-interface HistoryListProps {
-  activeId: number | null;
-  setTabs: (tabs: Tab[]) => void;
-}
+type HistoryListProps = {
+  tabId: number;
+  history: HistoryEntry[];
+  renameEntry: (url: string) => void;
+  deleteEntry: (url: string) => void;
+};
 
-export default function HistoryList({ activeId, setTabs }: HistoryListProps) {
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [url, setUrl] = useState("");
-
-  // Reload history whenever the active tab changes
-  useEffect(() => {
-    if (activeId == null) {
-      setHistory([]);
-      return;
-    }
-    api
-      .get<HistoryEntry[]>(`/tab/${activeId}/history`)
-      .then((res) => setHistory(res.data))
-      .catch((err) => console.error("Load history failed:", err));
-  }, [activeId]);
-
-  // Add a new URL entry
-  const addUrlToActiveTab = async () => {
-    if (activeId == null || !url.trim()) return;
-
-    try {
-      // POST to C-server and update tabs
-      const res = await api.post<Tab[]>(`/tab/${activeId}/entry`, null, {
-        params: { url: url.trim() },
-      });
-      setTabs(res.data);
-      setUrl("");
-
-      // Re-fetch the updated history
-      const hist = await api.get<HistoryEntry[]>(`/tab/${activeId}/history`);
-      setHistory(hist.data);
-    } catch (err) {
-      console.error("Add entry failed:", err);
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex space-x-2">
-        <Input
-          placeholder="add a url…"
-          value={url}
-          onChange={(e) => setUrl(e.currentTarget.value)}
-          onKeyDown={(e) => e.key === "Enter" && addUrlToActiveTab()}
-        />
-        <Button onClick={addUrlToActiveTab} variant="secondary">
-          Add
-        </Button>
-      </div>
-      <ul className="list-disc pl-5 space-y-1">
-        {history.map((h, i) => (
-          <li key={i}>
-            <a
-              href={h.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+const HistoryList: FC<HistoryListProps> = ({
+  tabId,
+  history,
+  renameEntry,
+  deleteEntry,
+}) => (
+  <div>
+    <h2 className="font-medium mb-2">History for Tab #{tabId}</h2>
+    {history.length > 0 ? (
+      <ul className="space-y-3">
+        {history.map((h, idx) => (
+          <li
+            key={idx}
+            className="py-2 relative border h-20 flex items-center justify-between px-4"
+          >
+            <div>
+              <p
+                className="cursor-pointer font-semibold"
+                onClick={() => renameEntry(h.url)}
+                title="Click to rename URL"
+              >
+                {h.url}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              className="text-destructive"
+              onClick={() => deleteEntry(h.url)}
             >
-              {h.title}
-            </a>
+              X
+            </Button>
           </li>
         ))}
       </ul>
-    </div>
-  );
-}
+    ) : (
+      <p className="text-gray-500">No history yet.</p>
+    )}
+  </div>
+);
+
+export default HistoryList;
