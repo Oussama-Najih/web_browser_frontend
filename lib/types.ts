@@ -4,6 +4,6 @@ export type HistoryEntry = {
 
 export type Tab = {
   id: number;
-  current?: HistoryEntry;
+  currentIndex: number;
   history: HistoryEntry[];
 };

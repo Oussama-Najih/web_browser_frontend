@@ -1,51 +1,28 @@
 "use client";
 
 import api from "@/lib/api";
-import { HistoryEntry } from "@/lib/types";
-import { useEffect, useState } from "react";
-
-export type Tab = {
-  id: number;
-  current?: { url: string };
-  history: { url: string }[];
-};
+import { HistoryEntry, Tab } from "@/lib/types";
 
 export default function TabList({
   activeId,
   onSelect,
-  setHistory,
-  setCurrent,
+  setTabs,
+  tabs,
 }: {
   activeId: number | null;
-  onSelect: (id: number | null) => void;
-  setHistory: (history: HistoryEntry[]) => void;
-  setCurrent: (current: HistoryEntry | null) => void;
+  onSelect: (id: number) => void;
+  setTabs: (tabs: Tab[]) => void;
+  tabs: Tab[];
 }) {
-  const [tabs, setTabs] = useState<Tab[]>([]);
-
-  const fetchTabs = async () => {
-    const tabs = await api.get<Tab[]>("/tabs").then((res) => res.data);
-    setTabs(tabs);
-    onSelect(tabs[0]?.id || null);
-  };
-
-  useEffect(() => {
-    fetchTabs();
-  }, []);
-
   const handleDelete = async (id: number) => {
     const { data: tabs } = await api.delete<Tab[]>(`/tab/${id}`);
     setTabs(tabs);
     const idx = tabs.findIndex((t) => t.id === id);
     if (idx !== -1) {
-      onSelect(tabs[idx].id);
-      setHistory(tabs[idx].history);
-      setCurrent(tabs[idx].current || null);
+      onSelect(id);
     } else if (tabs.length > 0) {
       const previousTab = tabs.find((t) => t.id === id - 1) as Tab;
       onSelect(previousTab?.id);
-      setHistory(previousTab?.history);
-      setCurrent(previousTab?.current || null);
     }
   };
 
@@ -53,8 +30,6 @@ export default function TabList({
     const { data: tabs } = await api.post<Tab[]>("/tabs");
     setTabs(tabs);
     onSelect(tabs[tabs.length - 1].id);
-    setHistory([]);
-    setCurrent(null);
   };
 
   return (
