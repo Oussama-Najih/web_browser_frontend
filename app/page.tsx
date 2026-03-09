@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
-import TabList from "@/components/TabList";
+import TabList, { Tab } from "@/components/TabList";
 import HistoryList from "@/components/HistoryList";
 import { Button } from "@/components/ui/button";
 
@@ -16,14 +16,15 @@ export default function Home() {
   const [showHistory, setShowHistory] = useState(false);
 
   const fetchTab = async (tabId: number) => {
-    const tabs = await api
-      .get<
-        { id: number; current: HistoryEntry | null; history: HistoryEntry[] }[]
-      >("/tabs")
-      .then((res) => res.data);
+    const tabs = await api.get<Tab[]>("/tabs").then((res) => res.data);
     const tab = tabs.find((t) => t.id === tabId);
     setCurrent(tab?.current || null);
     setHistory(tab?.history || []);
+  };
+
+  const updateHistoryList = (tab: Tab) => {
+    setCurrent(tab.current || null);
+    setHistory(tab.history);
   };
 
   useEffect(() => {
@@ -36,29 +37,38 @@ export default function Home() {
 
   const visitUrl = async () => {
     if (active === null || !urlInput) return;
-    await api.post(`/tab/${active}/visit`, { url: urlInput });
+    const { data: tab } = await api.post<Tab>(`/tab/${active}/visit`, {
+      url: urlInput,
+    });
     setUrlInput("");
-    fetchTab(active);
+    updateHistoryList(tab);
   };
 
   const navigate = async (direction: "back" | "forward") => {
     if (active === null) return;
-    await api.post(`/tab/${active}/navigate`, { direction });
-    fetchTab(active);
+    const { data: tab } = await api.post(`/tab/${active}/navigate`, {
+      direction,
+    });
+    updateHistoryList(tab);
   };
 
   const deleteEntry = async (url: string) => {
     if (active === null) return;
-    await api.delete(`/tab/${active}/entry`, { data: { url } });
-    fetchTab(active);
+    const { data: tab } = await api.delete(`/tab/${active}/entry`, {
+      data: { url },
+    });
+    updateHistoryList(tab);
   };
 
   const renameEntryUrl = async (oldUrl: string) => {
     if (active === null) return;
     const newUrl = prompt("Enter the new URL:", oldUrl);
     if (!newUrl || newUrl === oldUrl) return;
-    await api.put(`/tab/${active}/entry`, { url: oldUrl, newUrl });
-    fetchTab(active);
+    const { data: tab } = await api.put(`/tab/${active}/entry`, {
+      url: oldUrl,
+      newUrl,
+    });
+    updateHistoryList(tab);
   };
 
   const canGoBack = () => {
@@ -77,7 +87,12 @@ export default function Home() {
     <main className="p-4 space-y-4">
       <h1 className="text-xl font-semibold">Mini Browser</h1>
 
-      <TabList activeId={active} onSelect={setActive} />
+      <TabList
+        activeId={active}
+        onSelect={setActive}
+        setHistory={setHistory}
+        setCurrent={setCurrent}
+      />
 
       {active !== null && (
         <div className="space-y-4">
