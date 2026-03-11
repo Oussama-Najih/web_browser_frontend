@@ -90,7 +90,6 @@ export default function TabList() {
   return (
     <div className="flex flex-col">
       <div className="flex space-x-2 mb-4">
-        {activeId}:{currentIndex}
         {tabs.map((t) => (
           <div key={t.id} className="relative">
             <button

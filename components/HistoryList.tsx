@@ -4,6 +4,7 @@ import { FC, useState } from "react";
 import { Button } from "@/components/ui/button";
 import api from "@/lib/api";
 import { HistoryEntry, Tab } from "@/lib/types";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 type HistoryListProps = {
   tabId: number;
@@ -29,10 +30,10 @@ const HistoryList: FC<HistoryListProps> = ({
     <div>
       <div className="flex space-x-2 items-center">
         <Button onClick={() => navigate("back")} disabled={!canGoBack}>
-          ◀ Back
+          <ArrowLeft className="w-4 h-4" />
         </Button>
         <Button onClick={() => navigate("forward")} disabled={!canGoForward}>
-          Forward ▶
+          <ArrowRight className="w-4 h-4" />
         </Button>
         <Button variant="secondary" onClick={() => setShowHistory((h) => !h)}>
           {showHistory ? "Hide History" : "Show History"}
